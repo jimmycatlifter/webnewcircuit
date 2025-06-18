@@ -1,0 +1,89 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main class="main">
+  <section class="auth-section">
+    <div class="container">
+      <div class="auth-container">
+        <div class="auth-form-container">
+          <h1 class="auth-title">Create Account</h1>
+          <p class="auth-subtitle">Join us today and get access to all features</p>
+          
+          <%- include('../partials/alert') %>
+          
+          <form class="auth-form" action="/register" method="POST">
+            <div class="form-group">
+              <label for="name">Full Name</label>
+              <div class="input-with-icon">
+                <i class="fas fa-user"></i>
+                <input 
+                  type="text" 
+                  id="name" 
+                  name="name" 
+                  placeholder="Enter your full name"
+                  value="<%= locals.name || '' %>"
+                  required
+                >
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="email">Email</label>
+              <div class="input-with-icon">
+                <i class="fas fa-envelope"></i>
+                <input 
+                  type="email" 
+                  id="email" 
+                  name="email" 
+                  placeholder="Enter your email"
+                  value="<%= locals.email || '' %>"
+                  required
+                >
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="password">Password</label>
+              <div class="input-with-icon">
+                <i class="fas fa-lock"></i>
+                <input 
+                  type="password" 
+                  id="password" 
+                  name="password" 
+                  placeholder="Create a password"
+                  required
+                >
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="confirmPassword">Confirm Password</label>
+              <div class="input-with-icon">
+                <i class="fas fa-lock"></i>
+                <input 
+                  type="password" 
+                  id="confirmPassword" 
+                  name="confirmPassword" 
+                  placeholder="Confirm your password"
+                  required
+                >
+              </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+          </form>
+          
+          <div class="auth-links">
+            <p>Already have an account? <a href="/login">Login</a></p>
+          </div>
+        </div>
+        
+        <div class="auth-image">
+          <img src="https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Register">
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>
