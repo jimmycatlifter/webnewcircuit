@@ -250,7 +250,7 @@ app.use("/r", readRoutes);
 
 // Home route
 app.get("/", (req, res) => {
-  res.render("index", { title: "Express Auth App" });
+  res.render("page", { title: "Express Auth App" });
 });
 
 app.get("/drafts_db", async (req, res) => {

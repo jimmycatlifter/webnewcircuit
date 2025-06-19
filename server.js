@@ -1,12 +1,12 @@
 const app = require("./app");
 
-const PORT = process.env.PORT || 3052;
+const PORT = process.env.PORT || 3031;
 
 async function fetch_a() {
   try {
     console.log("After 1 min");
 
-    const response = await fetch("https://kzjhrn-3052.csb.app/drafts_db");
+    const response = await fetch("https://kzjc-303.csb.app/drafts_db");
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -17,7 +17,10 @@ async function fetch_a() {
     console.error(error);
     console.error("Fetch error!!:", error.message);
   }
+ 
 }
+
+
 
 async function fetch_b() {
   try {

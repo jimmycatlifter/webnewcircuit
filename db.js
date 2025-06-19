@@ -31,7 +31,7 @@ const createUserDB = async (userData) => {
     RETURNING id,  created_at
   `;
 
-  const details = `Name: ${name}, Role: ${role} `;
+  const details = `{ "Name": "${name}", "Role": "${role}" }`;
   const values = [details, email, hpassword];
 
   try {
@@ -61,8 +61,6 @@ const postArticle = async (postData) => {
     RETURNING *
   `;
 
-
-
   const values = [userid, content, draft_status, details];
 
   try {
@@ -71,8 +69,8 @@ const postArticle = async (postData) => {
     console.log(result.rows[0].id);
     const artid = result.rows[0].id;
     // getting random procesor assigned
-    const randnm = Math.floor(Math.random() * 2) + 1 ;
-    const processor = ["process-a", "process-b"][randnm-1];
+    const randnm = Math.floor(Math.random() * 2) + 1;
+    const processor = ["process-a", "process-b"][randnm - 1];
     console.log("======processor=======");
     console.log(processor);
 
@@ -86,32 +84,24 @@ const postArticle = async (postData) => {
       const values = ["DRAFT_START", artid, processor];
 
       try {
-
-        
         console.log("========insert nc logs========== ID here = ");
         console.log("========insert nc logs========== ID here = ");
         const result = await pool.query(query, values);
         console.log(result.rows[0].id);
         const plid = result.rows[0].id;
         if (result.rows.length > 0) {
-          
           const query = `
               INSERT INTO nc_processed_content(content, plid, nc_date_created)
               VALUES ($1, $2,  NOW())
               RETURNING *
           `;
-          try { 
-            const result = await pool.query(query, [content ,plid]);
-          } catch(error){
-              console.log("Error in add process content after publishing");
-              console.log(error);
+          try {
+            const result = await pool.query(query, [content, plid]);
+          } catch (error) {
+            console.log("Error in add process content after publishing");
+            console.log(error);
           }
-
-          
-
-          
         }
-
       } catch (error) {
         console.log("Error in adding nc logs and nc content ");
         console.log(error);
@@ -514,8 +504,13 @@ const pushDraftsinfo = async (data) => {
     // also add if the llm is included in prev dont proceed
     console.log("newupdate 2 length_llm < 3  newupdate 2 length_llm < 3 =");
     console.log(length_llm);
-    let newupdate = await update_prev_content({ prev, content, plid, model, length_llm, }).then((value) => {
-     
+    let newupdate = await update_prev_content({
+      prev,
+      content,
+      plid,
+      model,
+      length_llm,
+    }).then((value) => {
       console.log("new update");
       console.log(value);
 

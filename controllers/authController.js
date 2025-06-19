@@ -6,9 +6,10 @@ const bcrypt = require('bcryptjs');
 // Import database functions for future use
 const { getUserByEmailDB, createUserDB } = require('../db');
 
+
 // Show login page
 const showLoginPage = (req, res) => {
-  res.render('auth/login', { 
+  res.render('auth/login_a', { 
     title: 'Login',
     error: req.query.error || null,
     success: req.query.success || null
@@ -37,13 +38,13 @@ const loginUser = async (req, res) => {
   }
 
    
-  let user=null;
+  let user = null;
   try {
     user = await getUserByEmailDB(email);
     console.log("userlogin");
     // console.log(user);
     if (!user || user == null) {
-      return res.render('auth/login', {
+      return res.render('auth/login_a', {
         title: 'Login',
         error: 'Invalid email or password',
         email
@@ -55,7 +56,7 @@ const loginUser = async (req, res) => {
   } catch (error) {
     console.log("eror");
     console.log(error);
-    return res.render('auth/login', {
+    return res.render('auth/login_a', {
       title: 'Login',
       error: 'An error occurred during login',
       email
