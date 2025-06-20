@@ -322,6 +322,8 @@ const getSearchedchannels = async (data) => {
 };
 
 const update_prev_content = async (data) => {
+  
+
   const { content, plid, model, prev, length_llm } = data;
 
   let model_occur = "2025v New Circuit Model: " + model;
@@ -329,21 +331,21 @@ const update_prev_content = async (data) => {
   console.log("if(prev.split(model_occur).length > 0  ){");
 
   // console.log(prev);
-  console.log("prev.split(model_occur).length  =");
-  console.log(prev.split(model_occur).length);
+  // console.log("prev.split(model_occur).length  =");
+  // console.log(prev.split(model_occur).length);
 
-  console.log(" model_occur length_llm =");
-  console.log(model_occur, length_llm);
-  console.log("prev.length");
-  console.log(prev.length);
-  console.log("prev.split(model_occur).length=");
-  console.log(prev.split(model_occur).length);
+  // console.log("model_occur length_llm =");
+  // console.log(model_occur, length_llm);
+  // console.log("prev.length");
+  // console.log(prev.length);
+  // console.log("prev.split(model_occur).length=");
+  // console.log(prev.split(model_occur).length);
 
-  console.log("prev.indeOf(++++++++model_occur)++++++++++");
-  console.log("prev.indeOf(model_occur)");
-  console.log(prev.indexOf(model_occur));
-  console.log("prev.split(model_occur).length > 0 =");
-  console.log(prev.split(model_occur).length > 0);
+  // console.log("prev.indeOf(++++++++model_occur)++++++++++");
+  // console.log("prev.indeOf(model_occur)");
+  // console.log(prev.indexOf(model_occur));
+  // console.log("prev.split(model_occur).length > 0 =");
+  // console.log(prev.split(model_occur).length > 0);
 
   if (prev.indexOf(model_occur) > 0 && prev.length > 0) {
     return null;
@@ -381,29 +383,32 @@ const update_prev_content = async (data) => {
 
     if (result.rows.length > 0) {
       if (!(length_llm < 3) || length_llm >= 3) {
-        const query_nclogs = `UPDATE nc_process_logs
-                    SET status = $1 WHERE id = $2
-                    RETURNING *
-                  `;
+          const query_nclogs = `UPDATE nc_process_logs
+                      SET status = $1 WHERE id = $2
+                      RETURNING *
+                    `;
 
-        try {
-          const result = await pool.query(query_nclogs, ["DRAFT_VERIFY", plid]);
+          try {
+              const result = await pool.query(query_nclogs, ["DRAFT_VERIFY", plid]);
 
-          console.log("Update status DRAFT_VERIFY result.rows[0]");
+              console.log("Update status DRAFT_VERIFY result.rows[0]");
 
-          if (result.rows.length > 0) {
-            console.log("Update status DRAFT_VERIFY ok!!! ");
-            return true;
-          } /* << if theres result return true */
-        } catch (err) {
-          console.log("Error in update status to draft_verify ");
-          return "Error";
-        }
+              if (result.rows.length > 0) {
+                console.log("Update status DRAFT_VERIFY ok!!! ");
+                return true;
+              } /* << if theres result return true */
 
-        console.log("close here after success update if rows has 1 ");
-        console.log("close here after success update if rows has 1 ");
-        console.log("close here after success update if rows has 1 ");
-        console.log("close here after success update if rows has 1 ");
+          } catch (err) {
+              console.log("Error in update status to draft_verify ");
+
+              throw new Error(`Error in update status to draft_verify Server Error "${error.message}"`);    
+            
+          }
+
+          console.log("close here after success update if rows has 1 ");
+          console.log("close here after success update if rows has 1 ");
+          console.log("close here after success update if rows has 1 ");
+          console.log("close here after success update if rows has 1 ");
       }
 
       return result.rows[0];
@@ -415,6 +420,31 @@ const update_prev_content = async (data) => {
     return "Error";
   }
 };
+
+const getVerificDr = async () => {
+  const query = "Select nc.*, pl.* from nc_processed_content nc, nc_process_logs pl  where pl.id in (select id from nc_process_logs where processor ='process-a') and pl.status = 'DRAFT_VERIFY' and nc.plid in (select id from nc_process_logs where processor ='process-a') limit 1";
+
+  try {
+    const result = await pool.query(query);
+    console.log(" @get DRAFTS result.rows[0].results ");
+    
+    if (result.rows.length > 0) {
+      console.log(result.rows[0].results);
+
+      return result.rows;
+    } else {
+      // return null;
+      console.log("NONE 4 PROCESS_A ");
+      throw new Error(`Nothing to process for this processor`);
+    }
+  } catch (error) {
+    console.log("error get drafts");
+    console.log(error);
+    throw new Error(`Nothing to process for this processor`);
+  }
+};
+
+
 
 const getDrafts = async () => {
   const query =
@@ -457,9 +487,7 @@ const pushDraftsinfo = async (data) => {
     const prev_content = await pool.query(query_prev, [plid]);
 
     console.log(" @@drafts SELECT process_content   ");
-    console.log(
-      "==================prev_content.rows[0] after selecting previous content ========================"
-    );
+    console.log(  "==================prev_content.rows[0] after selecting previous content ========================" );
     console.log(prev_content.rows[0].results);
 
     prev = prev_content.rows[0].results;
@@ -477,11 +505,8 @@ const pushDraftsinfo = async (data) => {
     prev = "";
   } else {
     length_llm =
-      prev.split("------------------").length -
-      1; /** we need to split to get the llm exisiting on prev*/
-    console.log(
-      "-----------------------how many llm delimiter length llm ----------------------------"
-    );
+      prev.split("------------------").length -     1; /** we need to split to get the llm exisiting on prev*/
+    console.log(    "-----------------------how many llm delimiter length llm ----------------------------"  );
     console.log(
       "-----------------------how many llm delimiter length llm ----------------------------"
     );
@@ -515,11 +540,11 @@ const pushDraftsinfo = async (data) => {
       console.log(value);
 
       if (value !== null) {
-        /* checks if there is an updated string returned [updated menaing new string] */
+        /* checks if there is an updated string returned [updated meaning new string] */
         return true;
       } else {
         /* If  model occured in prev */
-        return "Error in updating processor!";
+        return "Skip!";
       }
     });
 
@@ -593,4 +618,5 @@ module.exports = {
   postArticle,
   getDrafts,
   pushDraftsinfo,
+  getVerificDr,
 };

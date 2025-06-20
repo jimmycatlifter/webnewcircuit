@@ -1,12 +1,12 @@
 const app = require("./app");
 
-const PORT = process.env.PORT || 3031;
+const PORT = process.env.PORT || 3038;
 
 async function fetch_a() {
   try {
-    console.log("After 1 min");
+    console.log("After 2 min");
 
-    const response = await fetch("https://kzjc-303.csb.app/drafts_db");
+    const response = await fetch("https://n9yvxv-3038.csb.app/drafts_db");
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -22,12 +22,13 @@ async function fetch_a() {
 
 
 
+
 async function fetch_b() {
   try {
     console.log("hi fetch b");
 
     const response = await fetch(
-      "https://jsonplaceholder.typicode.com/posts/1"
+      "https://jsonplaceholder.typicode.com/posts/3"
     );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -40,12 +41,14 @@ async function fetch_b() {
 }
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log("++++++++app+++++++");
+    console.log(`Server running on port ${PORT}`);
+    console.log("++++++++app+++++++");
 
-  setInterval(() => {
-    // fetch_a();
-    console.log("///////hi////////");
-  }, 10000); // Calls greet() every 1000 ms (1 second)
-  // setInterval(fetch_b, 200000);
+    setInterval(() => {
+      fetch_a();
+      console.log("\\\\\\\\\\\\\\");
+    }, 38000); 
+    // setInterval(fetch_b, 200 000);
 });
+
+
