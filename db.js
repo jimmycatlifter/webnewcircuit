@@ -50,18 +50,18 @@ const createUserDB = async (userData) => {
 const postArticle = async (postData) => {
   /* any posted article will be first draft for misinformation its button will be labeled saved */
   /* once saved then add rows to nclogs and nc_content */
-  const { content, userid, draft_status, details } = postData;
+  const { content, userid, draft_status, details, descrip } = postData;
   console.log("post micro user @@ postArticle");
   console.log(content);
   console.log(userid);
 
   const query = `
-    INSERT INTO nc_articles(nc_subswriter, nc_content, nc_isdraft, nc_details_article,  nc_date_created) 
-    VALUES ($1, $2, $3, $4, NOW())
+    INSERT INTO nc_articles(nc_subswriter, nc_content, nc_isdraft, nc_details_article, desciption, nc_date_created) 
+    VALUES ($1, $2, $3, $4, $5 NOW())
     RETURNING *
   `;
 
-  const values = [userid, content, draft_status, details];
+  const values = [userid, content, draft_status, details, descrip];
 
   try {
     const result = await pool.query(query, values);

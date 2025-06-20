@@ -60,7 +60,7 @@ const rendrHome = async (req, res) => {
   // get 5 notification history from 7 days ago
   let subs = null;
   let artcls = [];
-  let email = req.user;  
+  let email = req.user;
   // console.log(email);
   let user = await getUserSubsByEmail(email).then((value) => {
     // TODO : details may be invalid JSON
@@ -70,21 +70,26 @@ const rendrHome = async (req, res) => {
 
     if (value.length > 0) {
       for (let i = 0; i < value.length; i++) {
-        let { title } = JSON.parse(value[i].nc_details_article);
-        artcls.push(JSON.stringify(value[i].nc_details_article));
+        let { title, published, url } = JSON.parse(value[i].nc_details_article);
+        const desc = value[i].nc_description;
+        const ar = { published, title, desc, url };
+        console.log("article desc here++++++++++++++++++");
+
+        console.log(ar);     
+        artcls.push(ar);
 
         console.log("ti===", title);
       }
 
       console.log(">>>>>> How >>");
-      console.log(typeof value);
-      console.log(value[0]);
-      console.log(JSON.stringify(value[0]));
+      console.log(typeof artcles);
+      // console.log(value[0]);
+      // console.log(JSON.stringify(value[0]));
       console.log("value");
-      console.log(value);
-      subs = value;
+       
+      
     }
-    subs = value;
+ 
   });
 
   console.log("user subs==");
@@ -94,7 +99,6 @@ const rendrHome = async (req, res) => {
     userinfo: req.userinfo,
     subitems: artcls,
   });
-
 };
 
 const post_microblog = async (req, res) => {
@@ -130,7 +134,7 @@ const post_publishercontent = async (req, res) => {
   // TODO : CHECK IF THE REQUEST IS FROM CREATOR
   let is_publisher;
 
-  const { content, title } = req.body;
+  const { content, title, descip } = req.body;
   console.log("channel ", req.user_ischannel);
 
   console.log("fn!!!!!================!!!!!!!!!!");
@@ -140,7 +144,7 @@ const post_publishercontent = async (req, res) => {
   console.log(req.userinfo);
 
   let userid = null;
-  let categories = "{\"tags\": [\"Lifestyle\", \"Street Children\"]}";
+  let categories = '{"tags": ["Lifestyle", "Street Children"]}';
 
   console.log("--------JSON.parse(categories)----------");
   console.log(JSON.parse(categories));
@@ -150,7 +154,7 @@ const post_publishercontent = async (req, res) => {
   console.log(req.userfullname);
   const timestamp = Date.now();
   const isoString = new Date(timestamp).toISOString();
-  const hyurl =  (title+ " #" ).trim().split(/\s+/).join('-');
+  const hyurl = (title + " #").trim().split(/\s+/).join("-");
   console.log(hyurl);
   let details = `{
     "published": "${isoString}",
@@ -158,21 +162,21 @@ const post_publishercontent = async (req, res) => {
     "url" : "${hyurl}"
   }`;
 
-
   console.log("JSON.stringify(details) ============================== ");
   // console.log(JSON.stringify(details));
-  
+
   const userob = await getUserByEmailDB(req.user).then((vl) => {
     console.log("email == @getUserByEmailDB ");
     userid = vl.id;
   });
 
   try {
-    const posting = await postArticle({ 
+    const posting = await postArticle({
       content,
       userid,
       draft_status,
       details,
+      descrip,
     }).then((vl) => {
       console.log("postingblog");
       console.log("<== blogging");
