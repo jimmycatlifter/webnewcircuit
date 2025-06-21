@@ -12,13 +12,17 @@ const publisherRoutes = require("./routes/publisherRoutes");
 const editorRoutes = require("./routes/editorRoutes");
 const readRoutes = require("./routes/readRoutes");
 
-const { getDrafts, pushDraftsinfo , getVerificDr} = require("./db");
+const {
+  getDrafts,
+  pushDraftsinfo,
+  getVerificDr,
+  pushVDraftsinfo,
+} = require("./db");
 
 const app = express();
 
-
 // kluster ai api key
-const apiKey = "306f81b0-6ade-40cd-90be-ed5b1d8de539";
+const apiKey = "b96b0973-fa7c-4e93-82ba-8d253e3938c7";
 
 async function fetch_kly1(idarticle, paragraph_art, modelname) {
   let returned_result = "";
@@ -67,12 +71,15 @@ async function fetch_kly1(idarticle, paragraph_art, modelname) {
                 model: modelname,
                 content: JSON.parse(result).choices[0].message.content,
               };
-                
-                const posting = await pushDraftsinfo(data).then(async (vl) => {
-                  console.log("++++++++++++++end pushDraftsinfo vl true++++++++++");
+
+              const posting = await pushDraftsinfo(data)
+                .then(async (vl) => {
+                  console.log(
+                    "++++++++++++++end pushDraftsinfo vl true++++++++++",
+                  );
                   console.log(vl);
-                  
-                }).catch(console.error);
+                })
+                .catch(console.error);
 
               return result; // full response text
             }
@@ -86,7 +93,7 @@ async function fetch_kly1(idarticle, paragraph_art, modelname) {
         let r = await read().then((response) => {
           console.log("response await reader");
           console.log(response);
-          return true;
+          return response;
         });
       }
     })
@@ -96,7 +103,7 @@ async function fetch_kly1(idarticle, paragraph_art, modelname) {
     });
 }
 
-async function fetch_klp2(plid,  content_draft , modelname) {
+async function fetch_klp2(plid, content_draft, modelname) {
   let returned_result = "";
   const response = await fetch("https://api.kluster.ai/v1/chat/completions", {
     method: "POST",
@@ -128,15 +135,33 @@ async function fetch_klp2(plid,  content_draft , modelname) {
         let result = "";
         let done_ = false;
         async function read() {
-          return reader.read().then(({ done, value }) => {
+          return reader.read().then(async ({ done, value }) => {
             if (done) {
               console.log("result is here - add to db here");
               // console.log(result);
               // console.log(JSON.parse(result).choices[0].message.content);
               returned_result = result;
 
-              console.log("TODO:: mistral=================returned_result-==============");
+              console.log(
+                "TODO:: mistral=================returned_result-==============",
+              );
               // console.log(returned_result);
+
+              console.log(JSON.parse(result).choices[0].message.content);
+              const data = {
+                plid: plid,
+                model: modelname,
+                content: JSON.parse(result).choices[0].message.content,
+              };
+
+              const posting = await pushVDraftsinfo(data)
+                .then(async (vl) => {
+                  console.log(
+                    "++++++++++++++end pushDraftsinfo vl true++++++++++",
+                  );
+                  console.log(vl);
+                })
+                .catch(console.error);
 
               return result; // full response text
             }
@@ -148,10 +173,11 @@ async function fetch_klp2(plid,  content_draft , modelname) {
         }
 
         let r = await read().then((response) => {
-          console.log("response await reader]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]");
+          console.log(
+            "response await reader]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+          );
           console.log(response);
           return response;
-          
         });
         console.log("what is r");
         console.log("what is r");
@@ -166,9 +192,8 @@ async function fetch_klp2(plid,  content_draft , modelname) {
       console.log(v);
     });
 
-   return await response;
- 
-  }
+  return await response;
+}
 
 async function fetch_kly3(paragraph_art) {
   let returned_result = "";
@@ -236,7 +261,7 @@ async function fetch_kly3(paragraph_art) {
 
 //Kluster AI
 
-// View engine 
+// View engine
 
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
@@ -269,163 +294,177 @@ app.get("/", (req, res) => {
 app.get("/drafts_db", async (req, res) => {
   let user = null;
   /** settimeout 3mins and search for plid if the plid on content has all models in string then update status DRAFT_verify then end func */
- 
-      let chk_db_artcl = null;
-      try {
-        console.log("getDrafts ==========================");
-        const postingblog = await getDrafts().then(async (vl) => {
-          // get variables
-                
-          let { plid, content, id, results, processor, articleid } = vl[0];
-          console.log(plid);
-          console.log("vl==========================");
-          console.log(vl);
 
-          const sentences = content
-            .split(".")
-            .map((sentence) => sentence.trim())
-            .filter((sentence) => sentence.length > 0);
+  let chk_db_artcl = null;
+  try {
+    console.log("getDrafts ==========================");
+    const postingblog = await getDrafts().then(async (vl) => {
+      // get variables
 
-          console.log(sentences.length);
+      let { plid, content, id, results, processor, articleid } = vl[0];
+      console.log(plid);
+      console.log("vl==========================");
+      console.log(vl);
 
-          let prg_parts = sentences.length / 4;
-          //prg_parts are number of sentences in 1 paragraph
+      const sentences = content
+        .split(".")
+        .map((sentence) => sentence.trim())
+        .filter((sentence) => sentence.length > 0);
 
-          let pargph_1 = sentences.slice(0, prg_parts);
-          let pargph_2 = sentences.slice(prg_parts + 1, prg_parts + prg_parts);
-          let pargph_3 = sentences.slice(
-            prg_parts + prg_parts,
-            prg_parts + prg_parts + prg_parts
-          );
+      console.log(sentences.length);
 
-          const art_prgph_1 = pargph_1.join(". ");
-          const art_prgph_2 = pargph_2.join(". ");
-          const art_prgph_3 = pargph_3.join(". ");
+      let prg_parts = sentences.length / 4;
+      //prg_parts are number of sentences in 1 paragraph
 
-          console.log("==============art_prgph");
+      let pargph_1 = sentences.slice(0, prg_parts);
+      let pargph_2 = sentences.slice(prg_parts + 1, prg_parts + prg_parts);
+      let pargph_3 = sentences.slice(
+        prg_parts + prg_parts,
+        prg_parts + prg_parts + prg_parts,
+      );
 
-          let kl_llma = await fetch_kly1(
-            plid,
-            art_prgph_1,
-            "klusterai/Meta-Llama-3.1-8B-Instruct-Turbo"
-          )
-            .then((v) => {
-              console.log(v);
-            })
-            .catch(console.error);
+      const art_prgph_1 = pargph_1.join(". ");
+      const art_prgph_2 = pargph_2.join(". ");
+      const art_prgph_3 = pargph_3.join(". ");
 
-          let kl_mist = await fetch_kly1(
-            plid,
-            art_prgph_2,
-            "meta-llama/Llama-4-Scout-17B-16E-Instruct"
-          )
-            .then((v) => {
-              console.log(v);
-            })
-            .catch(console.error);
+      console.log("==============art_prgph");
 
-          let kl_dsek = await fetch_kly1(
-            plid,
-            art_prgph_3,
-            "mistralai/Mistral-Small-24B-Instruct-2501"
-          )
-            .then((v) => {
-              console.log(v);
-            })
-            .catch(console.error);
+      let kl_llma = await fetch_kly1(
+        plid,
+        art_prgph_1,
+        "klusterai/Meta-Llama-3.1-8B-Instruct-Turbo",
+      )
+        .then((v) => {
+          console.log(v);
+        })
+        .catch(console.error);
 
-          console.log("======kl_llma=true =====");
-        });
-      } catch (error) {
+      let kl_mist = await fetch_kly1(
+        plid,
+        art_prgph_2,
+        "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      )
+        .then((v) => {
+          console.log(v);
+        })
+        .catch(console.error);
 
-        console.log("Error!! Nothing to process @ drafts_db @app.js ", error);
-      }
-  
+      let kl_dsek = await fetch_kly1(
+        plid,
+        art_prgph_3,
+        "mistralai/Mistral-Small-24B-Instruct-2501",
+      )
+        .then((v) => {
+          console.log(v);
+        })
+        .catch(console.error);
+
+      console.log("======kl_llma=true =====");
+    });
+  } catch (error) {
+    console.log("Error!! Nothing to process @ drafts_db @app.js ", error);
+  }
 });
-
 
 // verify drafts db
 app.get("/draftsverif_db", async (req, res) => {
   let user = null;
   /** settimeout 3mins and search for plid if the plid on content has all models in string then update status DRAFT_verify then end func */
- 
-      let chk_db_artcl = null;
-      try {
-        console.log("getDrafts ==========================");
-        const verifying = await getVerificDr().then(async (vl) => {
-          // get variables
-                      
-                let { plid, content, id, results, processor, articleid } = vl[0];
-                
-                let index = null;
-                const par3_tx = ((results).split("2025v New Circuit Model: mistralai/Mistral-Small-24B-Instruct-2501"))[1]; 
-                
-               
-                const scout = ((results).split("2025v New Circuit Model: meta-llama/Llama-4-Scout-17B-16E-Instruct"))[1]; 
-                index = scout.indexOf("2025v New Circuit Model: mistralai/Mistral-Small-24B-Instruct-2501");
-                let par2_tx = null;
-                if (index !== -1) {
-                  par2_tx = scout.slice(0, index); // Cut string from 0 to the occurrence of the substring
-                }
-                let par1_tx = null;
 
-                const trbo = ((results).split("2025v New Circuit Model: klusterai/Meta-Llama-3.1-8B-Instruct-Turbo"))[1];
-                index = trbo.indexOf("2025v New Circuit Model: meta-llama/Llama-4-Scout-17B-16E-Instruct"); 
-                if (index !== -1) {
-                  par1_tx =  trbo.slice(0, index); // Cut string from 0 to the occurrence of the substring
-                }
+  let chk_db_artcl = null;
+  try {
+    console.log("getDrafts ==========================");
+    const verifying = await getVerificDr().then(async (vl) => {
+      // get variables
 
-                // const llamatur = ((scout).split("2025v New Circuit Model: klusterai/Meta-Llama-3.1-8B-Instruct-Turbo"))[1]; 
-                console.log("SPLIIIIIIIIIT?????????????");
-                console.log("SPLIIIIIIIIIT?????????????");
-                // console.log(trbo_tx);
-                console.log("llamascout]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]");
-                console.log("SPLIIIIIIIIIT?????????????");
-                console.log("SPLIIIIIIIIIT?????????????");
-                // console.log(scout_tx);
-// 
-                console.log("mistral]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]");
-                console.log("SPLIIIIIIIIIT?????????????");
-                console.log("SPLIIIIIIIIIT?????????????");
-                // console.log(mistr_tx);
-                
-                console.log("==============art_prgph");
-                console.log(plid);  
+      let { plid, content, id, results, processor, articleid } = vl[0];
 
-                let kl_llm0 = await fetch_klp2(plid, par1_tx,"meta-llama/Llama-4-Scout-17B-16E-Instruct")
-                 .then((v) => {
-                  console.log("The result klp2 par1_tx========================");
+      let index = null;
+      const par3_tx = results.split(
+        "2025v New Circuit Model: mistralai/Mistral-Small-24B-Instruct-2501",
+      )[1];
 
-        console.log("what is r");
-                    console.log(v);
-                  })
-                 .catch(console.error);
-
-                let kl_llm1 = await fetch_klp2(plid, par2_tx,"mistralai/Mistral-Small-24B-Instruct-2501")
-                  .then((v) => {
-
-                    console.log("The result klp2 par2_tx========================");
-                    console.log("what is r");
-                      console.log(v);
-                  }).catch(console.error);
-
-                let kl_llm2 = await fetch_klp2(plid, par3_tx,"klusterai/Meta-Llama-3.1-8B-Instruct-Turbo")
-                .then((v) => {
-                  console.log("The result klp2 par3_tx========================");
-                  console.log("what is r");
-                  console.log(v);
-
-                   
-                }).catch(console.error);
-
-                console.log("======kl_llma=true =====");
-                console.log(kl_llm0);
-        });
-      } catch (error) {
-
-        console.log("Error!! Nothing to process @ drafts_db @app.js ", error);
+      const scout = results.split(
+        "2025v New Circuit Model: meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      )[1];
+      index = scout.indexOf(
+        "2025v New Circuit Model: mistralai/Mistral-Small-24B-Instruct-2501",
+      );
+      let par2_tx = null;
+      if (index !== -1) {
+        par2_tx = scout.slice(0, index); // Cut string from 0 to the occurrence of the substring
       }
-  
+      let par1_tx = null;
+
+      const trbo = results.split(
+        "2025v New Circuit Model: klusterai/Meta-Llama-3.1-8B-Instruct-Turbo",
+      )[1];
+      index = trbo.indexOf(
+        "2025v New Circuit Model: meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      );
+      if (index !== -1) {
+        par1_tx = trbo.slice(0, index); // Cut string from 0 to the occurrence of the substring
+      }
+
+      console.log("SPLIIIIIIIIIT?????????????");
+      console.log("SPLIIIIIIIIIT?????????????");
+      // console.log(trbo_tx);
+      console.log("llamascout]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]");
+      console.log("SPLIIIIIIIIIT?????????????");
+      console.log("SPLIIIIIIIIIT?????????????");
+      // console.log(scout_tx);
+      //
+      console.log("mistral]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]");
+      console.log("SPLIIIIIIIIIT?????????????");
+      console.log("SPLIIIIIIIIIT?????????????");
+      // console.log(mistr_tx);
+
+      console.log("==============art_prgph");
+      console.log(plid);
+
+      let kl_llm0 = await fetch_klp2(
+        plid,
+        par1_tx,
+        "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      )
+        .then((v) => {
+          console.log("The result klp2 par1_tx========================");
+
+          console.log("what is r");
+          console.log(v);
+        })
+        .catch(console.error);
+
+      let kl_llm1 = await fetch_klp2(
+        plid,
+        par2_tx,
+        "mistralai/Mistral-Small-24B-Instruct-2501",
+      )
+        .then((v) => {
+          console.log("The result klp2 par2_tx========================");
+          console.log("what is r");
+          console.log(v);
+        })
+        .catch(console.error);
+
+      let kl_llm2 = await fetch_klp2(
+        plid,
+        par3_tx,
+        "klusterai/Meta-Llama-3.1-8B-Instruct-Turbo",
+      )
+        .then((v) => {
+          console.log("The result klp2 par3_tx========================");
+          console.log("what is r");
+          console.log(v);
+        })
+        .catch(console.error);
+
+      console.log("======kl_llma=true =====");
+      console.log(kl_llm0);
+    });
+  } catch (error) {
+    console.log("Error in  processing @ drafts_db @app.js ", error);
+  }
 });
 
 // 404 handler
