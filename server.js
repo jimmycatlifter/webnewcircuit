@@ -6,7 +6,7 @@ async function fetch_a() {
   try {
     console.log("After 2 min");
 
-    const response = await fetch("https://n9yvxv-3038.csb.app/drafts_db");
+    const response = await fetch("https://19c5d00c-4bcb-4c9e-b73b-ea7dbae4e736-00-3cdgwp38kfppi.worf.replit.dev/draftsverif_db");
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -45,8 +45,8 @@ app.listen(PORT, () => {
     console.log("++++++++app+++++++");
 
     setInterval(() => {
-      fetch_a();
-      console.log("\\\\\\\\\\\\\\");
+      // fetch_a();
+      // console.log("\\\\\\\\\\\\\");
     }, 38000); 
     // setInterval(fetch_b, 200 000);
 });
