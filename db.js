@@ -321,6 +321,105 @@ const getSearchedchannels = async (data) => {
   }
 };
 
+
+
+const update_prev_content_vdraft = async (data) => {
+
+
+  const { content, plid, model, prev, length_llm } = data;
+
+  let model_occur = "2025v New Circuit Model: " + model;
+
+  console.log("if(prev.split(model_occur).length > 0  ){");
+
+  // console.log(prev);
+  // console.log("prev.split(model_occur).length  =");
+  // console.log(prev.split(model_occur).length);
+
+  // console.log("model_occur length_llm =");
+  // console.log(model_occur, length_llm);
+  // console.log("prev.length");
+  // console.log(prev.length);
+  // console.log("prev.split(model_occur).length=");
+  // console.log(prev.split(model_occur).length);
+
+  // console.log("prev.indeOf(++++++++model_occur)++++++++++");
+  // console.log("prev.indeOf(model_occur)");
+  // console.log(prev.indexOf(model_occur));
+  // console.log("prev.split(model_occur).length > 0 =");
+  // console.log(prev.split(model_occur).length > 0);
+
+  if (prev.indexOf(model_occur) > 0 && prev.length > 0) {
+    return null;
+    // return null for cancel of update since the model is saved previously
+  }
+
+  /**  db insert but */
+  let newcontent = `\n\n`;
+  newcontent = newcontent + `\n2025v New Circuit Model: ` + model + `\n------------------\n`;
+  newcontent = newcontent + content;
+  newcontent = prev + newcontent;
+  console.log("------------------new line content--------------------------------");
+  console.log("------------------new line content--------------------------------");
+  // console.log(newcontent);
+  console.log("+++++++++-newcontent++++++++++++++");
+  console.log(newcontent);
+  const query = `UPDATE nc_processed_content
+        SET results_2 = $1 WHERE plid = $2
+        RETURNING *
+       `;
+
+  try {
+    const result = await pool.query(query, [newcontent, plid]);
+    // console.log("DB results push drafts");
+    // console.log("DB results push drafts");
+    console.log("++++++++++++DB results push drafts+++++++++++++++++++");
+    console.log("++++++++++++DB results push drafts+++++++++++++++++++");
+    console.log("++++++++++++DB results push drafts+++++++++++++++++++");
+    console.log("result.rows[0]");
+    console.log(result.rows[0].results);
+
+    if (result.rows.length > 0) {
+      if (!(length_llm < 3) || length_llm >= 3) {
+          const query_nclogs = `UPDATE nc_process_logs
+                      SET status = $1 WHERE id = $2
+                      RETURNING *
+                    `;
+
+          try {
+              const result = await pool.query(query_nclogs, ["DRAFT_VERIFY", plid]);
+
+              console.log("Update status DRAFT_VERIFY result.rows[0]");
+
+              if (result.rows.length > 0) {
+                console.log("Update status DRAFT_VERIFY ok!!! ");
+                return true;
+              } /* << if theres result return true */
+
+          } catch (err) {
+              console.log("Error in update status to draft_verify ");
+
+              throw new Error(`Error in update status to draft_verify Server Error "${error.message}"`);    
+
+          }
+
+          console.log("close here after success update if rows has 1 ");
+          console.log("close here after success update if rows has 1 ");
+          console.log("close here after success update if rows has 1 ");
+          console.log("close here after success update if rows has 1 ");
+      }
+
+      return result.rows[0];
+    }
+  } catch (error) {
+    console.log("error");
+    console.log(error);
+    console.log(`Error updating content processed: ${error.message}`);
+    return "Error";
+  }
+};
+
+
 const update_prev_content = async (data) => {
   
 
@@ -354,15 +453,11 @@ const update_prev_content = async (data) => {
 
   /**  db insert but */
   let newcontent = `\n\n`;
-  newcontent = "2025v New Circuit Model: " + model + "\n------------------\n";
+  newcontent = newcontent + `\n2025v New Circuit Model: ` + model + `\n------------------\n`;
   newcontent = newcontent + content;
   newcontent = prev + newcontent;
-  console.log(
-    "------------------new line content--------------------------------"
-  );
-  console.log(
-    "------------------new line content--------------------------------"
-  );
+  console.log("------------------new line content--------------------------------");
+  console.log("------------------new line content--------------------------------");
   // console.log(newcontent);
   console.log("+++++++++-newcontent++++++++++++++");
   console.log(newcontent);
@@ -583,6 +678,120 @@ const pushDraftsinfo = async (data) => {
   }
 };
 
+
+const pushVDraftsinfo = async (data) => {
+  const { content, plid, model } = data;
+console.log("++++++pushvdraftsinfo++++++");
+console.log("++++++pushvdraftsinfo++++++");
+  /**Get the row to be updated s prev value first */
+  const query_prev = "Select *  from  nc_processed_content where plid = $1  ";
+  //select nc.*, pl.*  from  nc_processed_content nc , nc_process_logs pl  where pl.id in (select id from nc_process_logs where processor ='process-a') and pl.status = 'DRAFT_START' and nc.plid in (select id from nc_process_logs where processor ='process-a') limit 1";
+
+  /** length_llm is about the checking of existing llm on the prev content so we dont need to update  */
+  let prev = null;
+  let length_llm = 0;
+
+  try {
+    const prev_content = await pool.query(query_prev, [plid]);
+
+    console.log(" @@drafts SELECT process_content   ");
+    console.log(  "==================prev_content.rows[0] after selecting previous content ========================" );
+    console.log(prev_content.rows[0].results);
+
+    prev = prev_content.rows[0].results_2;
+  } catch (error) {
+    console.log("error get drafts");
+    console.log(error);
+    // return something and abort
+  }
+  /**prev null check is ok */
+  if (prev == null) {
+    console.log("+++++++prev is null++++++++++++++++++++");
+    console.log("+++++++prev is null++++++++++++++++++++");
+    console.log("prev");
+    console.log(prev);
+    prev = "";
+  } else {
+    length_llm =
+      prev.split("------------------").length -     1; /** we need to split to get the llm exisiting on prev*/
+    console.log(    "-----------------------how many llm delimiter length llm ----------------------------"  );
+    console.log(
+      "-----------------------how many llm delimiter length llm ----------------------------"
+    );
+
+    console.log(model);
+    console.log(length_llm);
+
+    /* we are reading the prev by llm = what is the prev delimiters >> put it on console or */
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log(prev.split("------------------")[0]);
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>");
+
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log(prev.split("------------------")[1]);
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>");
+  }
+  /* If theres still no llm delimiter  or less llm then update */
+  if (length_llm < 3) {
+    // usince length_llm is < 3 proceed with update
+    // also add if the llm is included in prev dont proceed
+    console.log("newupdate 2 length_llm < 3  newupdate 2 length_llm < 3 =");
+    console.log(length_llm);
+     let newupdate = await update_prev_content_vdraft({
+      prev,
+      content,
+      plid,
+      model,
+      length_llm,
+    }).then((value) => {
+      console.log("new update");
+      console.log(value);
+
+      if (value !== null) {
+        /* checks if there is an updated string returned [updated meaning new string] */
+        return true;
+      } else {
+        /* If  model occured in prev */
+        return "Skip!";
+      }
+    });
+
+    console.log("awaited newupdate");
+    console.log("awaited newupdate");
+    console.log("awaited newupdate");
+    console.log("awaited newupdate");
+    console.log("========awaited newupdate=============");
+    console.log(newupdate);
+    console.log(typeof newupdate);
+
+    console.log("======WHY THE newupdate.length > 0 false ========");
+  } else {
+    // close the batch work here
+    console.log("index of mistral", prev.indexOf("mistralai/Mistral"));
+    console.log("index of turbo", prev.indexOf("Instruct-Turbo"));
+    console.log("index of scout", prev.indexOf("Llama-4-Scout"));
+
+    const query = `UPDATE nc_process_logs
+      SET status = $1 WHERE id = $2 and status = 'DRAFT_START'
+      RETURNING *
+    `;
+
+    try {
+      const result = await pool.query(query, ["DRAFT_VERIFY", plid]);
+      console.log("@@ after update of status to draft_verify!");
+      console.log(result.rows[0]);
+    } catch (error) {
+      console.log("Error in update of nc logs to DRAFT_VERIFY");
+      console.log(error);
+    }
+
+    // if process logs updated status and
+    console.log("close the batch work here");
+    return "Error in updating processor many llm ";
+  }
+};
+
+
 const getSearchedfriends = async (data) => {
   const { searched } = data;
   let search = `'%"Name"%:%${searched}%'`;
@@ -619,4 +828,5 @@ module.exports = {
   getDrafts,
   pushDraftsinfo,
   getVerificDr,
+  pushVDraftsinfo,
 };
